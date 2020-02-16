@@ -1,4 +1,5 @@
 import React from 'react';
+import AsyncStorage from '@react-native-community/async-storage';
 import {
   Alert,
   Button,
@@ -11,9 +12,7 @@ import {
   View,
 } from 'react-native';
 
-function Separator() {
-  return <View style={style.breakLine} />;
-}
+const Separator = () => (<View style={style.breakLine} />);
 
 class TodoListScreen extends React.Component {
   static navigationOptions = () => {
@@ -30,8 +29,11 @@ class TodoListScreen extends React.Component {
     editingItemIndex: '',
   };
 
-  componentDidMount() {
-    console.log('wtf is going on');
+  async componentDidMount() {
+    console.log('here we are');
+    this.setState({
+      todoList: JSON.parse(await AsyncStorage.getItem('todoList'))
+    })
   }
 
   errorDialog = (errorTitle, errorDesc) => {
@@ -43,12 +45,30 @@ class TodoListScreen extends React.Component {
       ],
     );
   };
-  _addToList = () => {
+  _setData = async (data) => {
+    try {
+      await AsyncStorage.setItem('todoList', JSON.stringify(data));
+      this.setState({
+        todoList: JSON.parse(await AsyncStorage.getItem('todoList'))
+      })
+    } catch (e) {
+      console.log(e)
+    }
+  };
+
+  _resetForm = () => {
+    this.setState({
+      title: '',
+      description: '',
+    })
+  };
+
+  _addToList = async () => {
     let {title, description} = this.state;
     let ToDoListCopy = this.state.todoList;
     if (this.validate()) {
       if (this.state.editMode) {
-        ToDoListCopy[this.state.editingItemIndex] = {title, description}
+        ToDoListCopy[this.state.editingItemIndex] = {title, description};
         this.setState({
           title: '',
           description: '',
@@ -60,11 +80,8 @@ class TodoListScreen extends React.Component {
           description,
         });
       }
-      this.setState({
-        todoList: ToDoListCopy,
-        title: '',
-        description: '',
-      });
+      this._setData(ToDoListCopy);
+      this._resetForm();
     }
   };
 
@@ -78,14 +95,11 @@ class TodoListScreen extends React.Component {
     })
   };
 
-  _deleteList = (index) => {
+  _deleteList = async (index) => {
     let ToDoListCopy = this.state.todoList;
     ToDoListCopy.splice(index, 1);
-    this.setState({
-      todoList: ToDoListCopy,
-      title: '',
-      description: '',
-    })
+    this._setData(ToDoListCopy);
+    this._resetForm();
   };
 
   validate = () => {
