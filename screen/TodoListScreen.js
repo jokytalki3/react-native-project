@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 
-const Separator = () => (<View style={style.breakLine} />);
+const Separator = () => <View style={style.breakLine} />;
 
 class TodoListScreen extends React.Component {
   static navigationOptions = () => {
@@ -30,29 +30,28 @@ class TodoListScreen extends React.Component {
   };
 
   async componentDidMount() {
-    console.log('here we are');
+    let data;
+    if (await AsyncStorage.getItem('todoList')) {
+      data = await AsyncStorage.getItem('todoList');
+    } else {
+      data = [];
+    }
     this.setState({
-      todoList: JSON.parse(await AsyncStorage.getItem('todoList'))
-    })
+      todoList: JSON.parse(data),
+    });
   }
 
   errorDialog = (errorTitle, errorDesc) => {
-    Alert.alert(
-      errorTitle,
-      errorDesc,
-      [
-        {text: 'OK'},
-      ],
-    );
+    Alert.alert(errorTitle, errorDesc, [{text: 'OK'}]);
   };
-  _setData = async (data) => {
+  _setData = async data => {
     try {
       await AsyncStorage.setItem('todoList', JSON.stringify(data));
       this.setState({
-        todoList: JSON.parse(await AsyncStorage.getItem('todoList'))
-      })
+        todoList: JSON.parse(await AsyncStorage.getItem('todoList')),
+      });
     } catch (e) {
-      console.log(e)
+      console.log(e);
     }
   };
 
@@ -60,7 +59,7 @@ class TodoListScreen extends React.Component {
     this.setState({
       title: '',
       description: '',
-    })
+    });
   };
 
   _addToList = async () => {
@@ -86,16 +85,16 @@ class TodoListScreen extends React.Component {
   };
 
   _editList = (item, index) => {
-    let {title,description} = item;
+    let {title, description} = item;
     this.setState({
       title,
       description,
       editMode: true,
       editingItemIndex: index,
-    })
+    });
   };
 
-  _deleteList = async (index) => {
+  _deleteList = async index => {
     let ToDoListCopy = this.state.todoList;
     ToDoListCopy.splice(index, 1);
     this._setData(ToDoListCopy);
@@ -105,13 +104,13 @@ class TodoListScreen extends React.Component {
   validate = () => {
     const {title, description, todoList} = this.state;
     let validated = true;
-    if(title === "" || description === "") {
+    if (title === '' || description === '') {
       this.errorDialog('Error', 'Field Cannot be Empty');
       validated = false;
       return validated;
     }
 
-    todoList.forEach((item) => {
+    todoList.forEach(item => {
       if (item.title === title) {
         this.errorDialog('Error', 'Title cannot be the same');
         validated = false;
@@ -124,40 +123,54 @@ class TodoListScreen extends React.Component {
   };
 
   renderItemList = () => {
-    const { todoList } = this.state;
-    return(
+    const {todoList} = this.state;
+    return (
       <View>
-        {
-          todoList.map(((item, index) => {
-            return (
-              <View key={index} style={{...style.Card, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10}}>
-                <View>
-                  <Text style={{fontWeight: 'bold'}}>{item.title}</Text>
-                  <Text>{item.description}</Text>
-                </View>
-                <View style={{flexDirection: 'row'}}>
-                  <TouchableWithoutFeedback onPress={()=> this._editList(item, index)}>
-                    <Image style={style.actionsButton} source={require('../common/assets/icon/icon_cute_edit.png')} />
-                  </TouchableWithoutFeedback>
-                  <View style={{width: 10}} />
-                  <TouchableWithoutFeedback onPress={()=> this._deleteList(index)}>
-                    <Image style={style.actionsButton} source={require('../common/assets/icon/icon_cute_delete.png')} />
-                  </TouchableWithoutFeedback>
-                </View>
+        {todoList.map((item, index) => {
+          return (
+            <View
+              key={index}
+              style={{
+                ...style.Card,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 10,
+              }}>
+              <View>
+                <Text style={{fontWeight: 'bold'}}>{item.title}</Text>
+                <Text>{item.description}</Text>
               </View>
-            )
-          }))
-        }
+              <View style={{flexDirection: 'row'}}>
+                <TouchableWithoutFeedback
+                  onPress={() => this._editList(item, index)}>
+                  <Image
+                    style={style.actionsButton}
+                    source={require('../common/assets/icon/icon_cute_edit.png')}
+                  />
+                </TouchableWithoutFeedback>
+                <View style={{width: 10}} />
+                <TouchableWithoutFeedback
+                  onPress={() => this._deleteList(index)}>
+                  <Image
+                    style={style.actionsButton}
+                    source={require('../common/assets/icon/icon_cute_delete.png')}
+                  />
+                </TouchableWithoutFeedback>
+              </View>
+            </View>
+          );
+        })}
       </View>
-    )
+    );
   };
 
   render() {
     let ButtonText = '';
     if (this.state.editMode) {
-      ButtonText = 'Update Item'
+      ButtonText = 'Update Item';
     } else {
-      ButtonText = 'Add To List'
+      ButtonText = 'Add To List';
     }
     return (
       <View style={{flex: 1, padding: 15}}>
@@ -176,12 +189,10 @@ class TodoListScreen extends React.Component {
             value={this.state.description}
           />
           <Separator />
-          <Button title={ButtonText} onPress={()=>this._addToList()} />
+          <Button title={ButtonText} onPress={() => this._addToList()} />
         </View>
-        <Separator/>
-        <ScrollView>
-          {this.renderItemList()}
-        </ScrollView>
+        <Separator />
+        <ScrollView>{this.renderItemList()}</ScrollView>
       </View>
     );
   }
@@ -218,6 +229,6 @@ const style = StyleSheet.create({
   actionsButton: {
     width: 25,
     height: 25,
-  }
+  },
 });
 export default TodoListScreen;
