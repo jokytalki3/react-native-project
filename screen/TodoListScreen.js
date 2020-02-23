@@ -1,5 +1,5 @@
 import React from 'react';
-import AsyncStorage from '@react-native-community/async-storage';
+import firestore from '@react-native-firebase/firestore';
 import {
   Alert,
   Button,
@@ -21,24 +21,32 @@ class TodoListScreen extends React.Component {
     };
   };
 
-  state = {
-    title: '',
-    description: '',
-    todoList: [],
-    editMode: false,
-    editingItemIndex: '',
+  constructor(props) {
+    super(props);
+    this.state = {
+      title: '',
+      description: '',
+      todoList: [],
+      editMode: false,
+      editingItemId: '',
+    };
+    this.ref = firestore().collection('todoList');
+  }
+  _fetchData = async () => {
+    let data = [];
+    this.ref.get().then(snapshot => {
+      snapshot.docs.forEach(item => {
+        let {title, description} = item._data;
+        data.push({id: item.id, title, description});
+      });
+      this.setState({
+        todoList: data,
+      });
+    });
   };
 
   async componentDidMount() {
-    let data;
-    if (await AsyncStorage.getItem('todoList')) {
-      data = await AsyncStorage.getItem('todoList');
-    } else {
-      data = [];
-    }
-    this.setState({
-      todoList: JSON.parse(data),
-    });
+    this._fetchData();
   }
 
   errorDialog = (errorTitle, errorDesc) => {
@@ -46,10 +54,8 @@ class TodoListScreen extends React.Component {
   };
   _setData = async data => {
     try {
-      await AsyncStorage.setItem('todoList', JSON.stringify(data));
-      this.setState({
-        todoList: JSON.parse(await AsyncStorage.getItem('todoList')),
-      });
+      await this.ref.add(data);
+      this._fetchData();
     } catch (e) {
       console.log(e);
     }
@@ -63,23 +69,21 @@ class TodoListScreen extends React.Component {
   };
 
   _addToList = async () => {
-    let {title, description} = this.state;
-    let ToDoListCopy = this.state.todoList;
+    let {title, description, editingItemId} = this.state;
     if (this.validate()) {
       if (this.state.editMode) {
-        ToDoListCopy[this.state.editingItemIndex] = {title, description};
-        this.setState({
-          title: '',
-          description: '',
-          editMode: false,
-        });
-      } else {
-        ToDoListCopy.push({
+        this.ref.doc(editingItemId).set({
           title,
           description,
         });
+        this.setState({
+          editMode: false,
+        });
+        this._fetchData();
+      } else {
+        // create new todoList
+        this._setData({title, description});
       }
-      this._setData(ToDoListCopy);
       this._resetForm();
     }
   };
@@ -90,14 +94,13 @@ class TodoListScreen extends React.Component {
       title,
       description,
       editMode: true,
-      editingItemIndex: index,
+      editingItemId: item.id,
     });
   };
 
-  _deleteList = async index => {
-    let ToDoListCopy = this.state.todoList;
-    ToDoListCopy.splice(index, 1);
-    this._setData(ToDoListCopy);
+  _deleteList = async id => {
+    await this.ref.doc(id).delete();
+    await this._fetchData();
     this._resetForm();
   };
 
@@ -151,7 +154,7 @@ class TodoListScreen extends React.Component {
                 </TouchableWithoutFeedback>
                 <View style={{width: 10}} />
                 <TouchableWithoutFeedback
-                  onPress={() => this._deleteList(index)}>
+                  onPress={() => this._deleteList(item.id)}>
                   <Image
                     style={style.actionsButton}
                     source={require('../common/assets/icon/icon_cute_delete.png')}
