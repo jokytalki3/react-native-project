@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   TouchableWithoutFeedback,
+  TouchableHighlight,
   View,
 } from 'react-native';
 
@@ -17,7 +18,7 @@ const Separator = () => <View style={style.breakLine} />;
 class TodoListScreen extends React.Component {
   static navigationOptions = () => {
     return {
-      title: 'To do List',
+      title: 'My ToDo List',
     };
   };
 
@@ -30,14 +31,8 @@ class TodoListScreen extends React.Component {
   };
 
   async componentDidMount() {
-    let data;
-    if (await AsyncStorage.getItem('todoList')) {
-      data = await AsyncStorage.getItem('todoList');
-    } else {
-      data = [];
-    }
     this.setState({
-      todoList: JSON.parse(data),
+      todoList: JSON.parse(await AsyncStorage.getItem('todoList')),
     });
   }
 
@@ -122,6 +117,13 @@ class TodoListScreen extends React.Component {
     return validated;
   };
 
+  navigateDetailsScreen = (item, index) => {
+    const {navigation} = this.props;
+    navigation.navigate('TodoListDetailsScreen', {
+      itemObject: item,
+    });
+  };
+
   renderItemList = () => {
     const {todoList} = this.state;
     return (
@@ -137,10 +139,13 @@ class TodoListScreen extends React.Component {
                 justifyContent: 'space-between',
                 marginBottom: 10,
               }}>
-              <View>
-                <Text style={{fontWeight: 'bold'}}>{item.title}</Text>
-                <Text>{item.description}</Text>
-              </View>
+              <TouchableHighlight
+                onPress={() => this.navigateDetailsScreen(item, index)}>
+                <View>
+                  <Text style={{fontWeight: 'bold'}}>{item.title}</Text>
+                  <Text>{item.description}</Text>
+                </View>
+              </TouchableHighlight>
               <View style={{flexDirection: 'row'}}>
                 <TouchableWithoutFeedback
                   onPress={() => this._editList(item, index)}>
