@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import AddNewItemModal from './AddNewItemModal';
 
 const Separator = () => <View style={style.breakLine} />;
 
@@ -29,9 +30,11 @@ class TodoListScreen extends React.Component {
       todoList: [],
       editMode: false,
       editingItemId: '',
+      isVisible: false,
     };
     this.ref = firestore().collection('todoList');
   }
+
   _fetchData = async () => {
     let data = [];
     this.ref.get().then(snapshot => {
@@ -52,6 +55,7 @@ class TodoListScreen extends React.Component {
   errorDialog = (errorTitle, errorDesc) => {
     Alert.alert(errorTitle, errorDesc, [{text: 'OK'}]);
   };
+
   _setData = async data => {
     try {
       await this.ref.add(data);
@@ -88,7 +92,7 @@ class TodoListScreen extends React.Component {
     }
   };
 
-  _editList = (item, index) => {
+  _editList = item => {
     let {title, description} = item;
     this.setState({
       title,
@@ -169,14 +173,15 @@ class TodoListScreen extends React.Component {
   };
 
   render() {
-    let ButtonText = '';
-    if (this.state.editMode) {
-      ButtonText = 'Update Item';
-    } else {
-      ButtonText = 'Add To List';
-    }
+    const {editMode, isVisible} = this.state;
+    const ButtonText = editMode ? 'UpdateItem' : 'Add To List';
+
     return (
       <View style={{flex: 1, padding: 15}}>
+        <AddNewItemModal
+          modalVisible={isVisible}
+          addToList={() => this._addToList()}
+        />
         <View style={style.Card}>
           <TextInput
             style={style.Input}
@@ -195,7 +200,16 @@ class TodoListScreen extends React.Component {
           <Button title={ButtonText} onPress={() => this._addToList()} />
         </View>
         <Separator />
+        <Button
+          title={'Add New Item'}
+          onPress={() =>
+            this.setState({
+              isVisible: true,
+            })
+          }
+        />
         <ScrollView>{this.renderItemList()}</ScrollView>
+
       </View>
     );
   }
