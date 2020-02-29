@@ -32,7 +32,7 @@ class TodoListScreen extends React.Component {
 
   async componentDidMount() {
     this.setState({
-      todoList: JSON.parse(await AsyncStorage.getItem('todoList')),
+      todoList: JSON.parse(await AsyncStorage.getItem('todoList')) || [],
     });
   }
 

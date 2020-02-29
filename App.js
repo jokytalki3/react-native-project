@@ -4,7 +4,7 @@ import {createStackNavigator} from 'react-navigation-stack';
 import TodoListScreen from './screen/TodoListScreen';
 
 import React from 'react';
-import TodoListDetailsScreen from "./screen/TodoListDetailsScreen";
+import TodoListDetailsScreen from './screen/TodoListDetailsScreen';
 
 const MainStack = createStackNavigator(
   {
