@@ -18,23 +18,34 @@ class AddNewItemModal extends React.Component {
       id: '',
       title: '',
       description: '',
-      editMode: false,
     };
   }
 
+  // Resets form back to normal state
+  _resetForm = () => {
+    this.setState({
+      title: '',
+      description: '',
+    });
+  };
+
+  // Call the addToList function from TodoListScreen
   _add = () => {
     let {title, description, id} = this.state;
-    const {addToList} = this.props;
-    if (this.props.editMode) {
+    const {addToList, editMode, closeModal} = this.props;
+    if (editMode) {
       addToList({title, description, editingItemId: id});
+      this._resetForm();
     } else {
       if (this.validate()) {
         addToList({title, description});
+        this._resetForm();
       }
     }
-    this.props.closeModal();
+    closeModal();
   };
 
+  // Validate both title and description fields
   validate = () => {
     const {title, description} = this.state;
     let validated = true;
@@ -61,28 +72,25 @@ class AddNewItemModal extends React.Component {
   };
 
   componentDidMount() {
-    if (this.props.editMode) {
-      let {title, description, id} = this.props.editData;
+    const {editMode, editData} = this.props;
+    if (editMode) {
+      let {title, description, id} = editData;
       this.setState({title, description, id});
     }
   }
 
   render() {
-    const {editMode} = this.state;
-    const {modalVisible} = this.props;
-    let ButtonText = '';
-    if (editMode) {
-      ButtonText = 'Update Item';
-    } else {
-      ButtonText = 'Add To List';
-    }
+    const {title, description} = this.state;
+    const {modalVisible, closeModal, modalTitle, editMode} = this.props;
+    let ButtonText = editMode ? 'Update Item' : 'Add to List';
+
     return (
       <View>
         <Modal
           animationType="fade"
           transparent={true}
           visible={modalVisible}
-          onRequestClose={() => this.props.closeModal()}>
+          onRequestClose={() => closeModal()}>
           <View
             style={{
               flex: 1,
@@ -92,21 +100,21 @@ class AddNewItemModal extends React.Component {
             <View style={{flex: 1, opacity: 0.3, backgroundColor: 'gray'}} />
             <View style={style.Card}>
               <View>
-                <Text>{this.props.title}</Text>
+                <Text>{modalTitle}</Text>
               </View>
               <Separator />
               <TextInput
                 style={style.Input}
                 onChangeText={v => this.setState({title: v})}
                 placeholder={'Title'}
-                value={this.state.title}
+                value={editMode ? title : ''}
               />
               <Separator />
               <TextInput
                 style={style.Input}
                 onChangeText={v => this.setState({description: v})}
                 placeholder={'Description'}
-                value={this.state.description}
+                value={editMode ? description : ''}
               />
               <Separator />
               <Button title={ButtonText} onPress={() => this._add()} />
@@ -114,7 +122,10 @@ class AddNewItemModal extends React.Component {
               <Button
                 title={'Cancel'}
                 color={'red'}
-                onPress={() => this.props.closeModal()}
+                onPress={() => {
+                  closeModal();
+                  this._resetForm();
+                }}
               />
             </View>
           </View>

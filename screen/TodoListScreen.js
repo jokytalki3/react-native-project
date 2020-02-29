@@ -1,24 +1,22 @@
 import React from 'react';
 import firestore from '@react-native-firebase/firestore';
 import {
-  Alert,
   Button,
   Image,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import AddNewItemModal from './AddNewItemModal';
-
-const Separator = () => <View style={style.breakLine} />;
+import editImage from '../common/assets/icon/icon_cute_edit.png';
+import deleteImage from '../common/assets/icon/icon_cute_delete.png';
 
 class TodoListScreen extends React.Component {
   static navigationOptions = () => {
     return {
-      title: 'To do List',
+      title: 'To Do List',
     };
   };
 
@@ -35,6 +33,7 @@ class TodoListScreen extends React.Component {
     this.ref = firestore().collection('todoList');
   }
 
+  // Load data from FireStore
   _fetchData = async () => {
     let data = [];
     this.ref.get().then(snapshot => {
@@ -48,10 +47,12 @@ class TodoListScreen extends React.Component {
     });
   };
 
+  // When Component Starts Load all the data from FireStore
   async componentDidMount() {
     this._fetchData();
   }
 
+  // Adding new data into FireStore
   _setData = async data => {
     try {
       await this.ref.add(data);
@@ -61,21 +62,16 @@ class TodoListScreen extends React.Component {
     }
   };
 
-  _resetForm = () => {
-    this.setState({
-      title: '',
-      description: '',
-    });
-  };
-
+  // Adding new item into the Todo List
   _addToList = async val => {
+    const {editMode} = this.state;
     let {title, description, editingItemId} = val;
-    if (this.state.editMode) {
+    if (editMode) {
       this.ref.doc(editingItemId).set({
         title,
         description,
       });
-      this.setState({
+      await this.setState({
         editMode: false,
       });
       this._fetchData();
@@ -83,9 +79,9 @@ class TodoListScreen extends React.Component {
       // create new todoList
       this._setData({title, description});
     }
-    this._resetForm();
   };
 
+  // Edit items
   _editList = item => {
     this.setState({
       isVisible: true,
@@ -94,13 +90,15 @@ class TodoListScreen extends React.Component {
     });
   };
 
+  // Delete items
   _deleteList = async id => {
     await this.ref.doc(id).delete();
     await this._fetchData();
-    this._resetForm();
   };
 
+  // Render the items that are retrieved from FireStore
   renderItemList = () => {
+    const {navigation} = this.props;
     const {todoList} = this.state;
     return (
       <View>
@@ -109,7 +107,7 @@ class TodoListScreen extends React.Component {
             <TouchableWithoutFeedback
               key={index}
               onPress={() =>
-                this.props.navigation.navigate('TodoDetailScreen', {data: item})
+                navigation.navigate('TodoDetailScreen', {data: item})
               }>
               <View
                 style={{
@@ -126,18 +124,12 @@ class TodoListScreen extends React.Component {
                 <View style={{flexDirection: 'row'}}>
                   <TouchableWithoutFeedback
                     onPress={() => this._editList(item, index)}>
-                    <Image
-                      style={style.actionsButton}
-                      source={require('../common/assets/icon/icon_cute_edit.png')}
-                    />
+                    <Image style={style.actionsButton} source={editImage} />
                   </TouchableWithoutFeedback>
                   <View style={{width: 10}} />
                   <TouchableWithoutFeedback
                     onPress={() => this._deleteList(item.id)}>
-                    <Image
-                      style={style.actionsButton}
-                      source={require('../common/assets/icon/icon_cute_delete.png')}
-                    />
+                    <Image style={style.actionsButton} source={deleteImage} />
                   </TouchableWithoutFeedback>
                 </View>
               </View>
@@ -149,21 +141,19 @@ class TodoListScreen extends React.Component {
   };
 
   render() {
-    const {editMode, editItemData, isVisible} = this.state;
-    const ButtonText = editMode ? 'UpdateItem' : 'Add To List';
+    const {editMode, editItemData, isVisible, todoList} = this.state;
 
     return (
       <View style={{flex: 1, padding: 15}}>
         {isVisible && (
           <AddNewItemModal
             modalVisible={isVisible}
-            title={'New Todo'}
+            modalTitle={'New Todo'}
             addToList={val => this._addToList(val)}
             closeModal={() => {
-              this.setState({isVisible: false});
-              this._resetForm();
+              this.setState({isVisible: false, editMode: false});
             }}
-            list={this.state.todoList}
+            list={todoList}
             editMode={editMode}
             editData={editItemData}
           />
