@@ -107,14 +107,14 @@ class AddNewItemModal extends React.Component {
                 style={style.Input}
                 onChangeText={v => this.setState({title: v})}
                 placeholder={'Title'}
-                value={editMode ? title : ''}
+                value={title}
               />
               <Separator />
               <TextInput
                 style={style.Input}
                 onChangeText={v => this.setState({description: v})}
                 placeholder={'Description'}
-                value={editMode ? description : ''}
+                value={description}
               />
               <Separator />
               <Button title={ButtonText} onPress={() => this._add()} />
