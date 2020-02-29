@@ -131,37 +131,42 @@ class TodoListScreen extends React.Component {
       <View>
         {todoList.map((item, index) => {
           return (
-            <View
+            <TouchableWithoutFeedback
               key={index}
-              style={{
-                ...style.Card,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 10,
-              }}>
-              <View>
-                <Text style={{fontWeight: 'bold'}}>{item.title}</Text>
-                <Text>{item.description}</Text>
+              onPress={() =>
+                this.props.navigation.navigate('TodoDetailScreen', {data: item})
+              }>
+              <View
+                style={{
+                  ...style.Card,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 10,
+                }}>
+                <View>
+                  <Text style={{fontWeight: 'bold'}}>{item.title}</Text>
+                  <Text>{item.description}</Text>
+                </View>
+                <View style={{flexDirection: 'row'}}>
+                  <TouchableWithoutFeedback
+                    onPress={() => this._editList(item, index)}>
+                    <Image
+                      style={style.actionsButton}
+                      source={require('../common/assets/icon/icon_cute_edit.png')}
+                    />
+                  </TouchableWithoutFeedback>
+                  <View style={{width: 10}} />
+                  <TouchableWithoutFeedback
+                    onPress={() => this._deleteList(item.id)}>
+                    <Image
+                      style={style.actionsButton}
+                      source={require('../common/assets/icon/icon_cute_delete.png')}
+                    />
+                  </TouchableWithoutFeedback>
+                </View>
               </View>
-              <View style={{flexDirection: 'row'}}>
-                <TouchableWithoutFeedback
-                  onPress={() => this._editList(item, index)}>
-                  <Image
-                    style={style.actionsButton}
-                    source={require('../common/assets/icon/icon_cute_edit.png')}
-                  />
-                </TouchableWithoutFeedback>
-                <View style={{width: 10}} />
-                <TouchableWithoutFeedback
-                  onPress={() => this._deleteList(item.id)}>
-                  <Image
-                    style={style.actionsButton}
-                    source={require('../common/assets/icon/icon_cute_delete.png')}
-                  />
-                </TouchableWithoutFeedback>
-              </View>
-            </View>
+            </TouchableWithoutFeedback>
           );
         })}
       </View>
