@@ -29,7 +29,7 @@ class TodoListScreen extends React.Component {
       description: '',
       todoList: [],
       editMode: false,
-      editingItemId: '',
+      editItemData: {},
       isVisible: false,
     };
     this.ref = firestore().collection('todoList');
@@ -52,10 +52,6 @@ class TodoListScreen extends React.Component {
     this._fetchData();
   }
 
-  errorDialog = (errorTitle, errorDesc) => {
-    Alert.alert(errorTitle, errorDesc, [{text: 'OK'}]);
-  };
-
   _setData = async data => {
     try {
       await this.ref.add(data);
@@ -72,33 +68,29 @@ class TodoListScreen extends React.Component {
     });
   };
 
-  _addToList = async () => {
-    let {title, description, editingItemId} = this.state;
-    if (this.validate()) {
-      if (this.state.editMode) {
-        this.ref.doc(editingItemId).set({
-          title,
-          description,
-        });
-        this.setState({
-          editMode: false,
-        });
-        this._fetchData();
-      } else {
-        // create new todoList
-        this._setData({title, description});
-      }
-      this._resetForm();
+  _addToList = async val => {
+    let {title, description, editingItemId} = val;
+    if (this.state.editMode) {
+      this.ref.doc(editingItemId).set({
+        title,
+        description,
+      });
+      this.setState({
+        editMode: false,
+      });
+      this._fetchData();
+    } else {
+      // create new todoList
+      this._setData({title, description});
     }
+    this._resetForm();
   };
 
   _editList = item => {
-    let {title, description} = item;
     this.setState({
-      title,
-      description,
+      isVisible: true,
       editMode: true,
-      editingItemId: item.id,
+      editItemData: item,
     });
   };
 
@@ -106,27 +98,6 @@ class TodoListScreen extends React.Component {
     await this.ref.doc(id).delete();
     await this._fetchData();
     this._resetForm();
-  };
-
-  validate = () => {
-    const {title, description, todoList} = this.state;
-    let validated = true;
-    if (title === '' || description === '') {
-      this.errorDialog('Error', 'Field Cannot be Empty');
-      validated = false;
-      return validated;
-    }
-
-    todoList.forEach(item => {
-      if (item.title === title) {
-        this.errorDialog('Error', 'Title cannot be the same');
-        validated = false;
-        return false;
-      } else {
-        validated = true;
-      }
-    });
-    return validated;
   };
 
   renderItemList = () => {
@@ -178,43 +149,36 @@ class TodoListScreen extends React.Component {
   };
 
   render() {
-    const {editMode, isVisible} = this.state;
+    const {editMode, editItemData, isVisible} = this.state;
     const ButtonText = editMode ? 'UpdateItem' : 'Add To List';
 
     return (
       <View style={{flex: 1, padding: 15}}>
-        <AddNewItemModal
-          modalVisible={isVisible}
-          addToList={() => this._addToList()}
-        />
-        <View style={style.Card}>
-          <TextInput
-            style={style.Input}
-            onChangeText={v => this.setState({title: v})}
-            placeholder={'Title'}
-            value={this.state.title}
+        {isVisible && (
+          <AddNewItemModal
+            modalVisible={isVisible}
+            title={'New Todo'}
+            addToList={val => this._addToList(val)}
+            closeModal={() => {
+              this.setState({isVisible: false});
+              this._resetForm();
+            }}
+            list={this.state.todoList}
+            editMode={editMode}
+            editData={editItemData}
           />
-          <Separator />
-          <TextInput
-            style={style.Input}
-            onChangeText={v => this.setState({description: v})}
-            placeholder={'Description'}
-            value={this.state.description}
+        )}
+        <View style={{paddingVertical: 30}}>
+          <Button
+            title={'Add New Item'}
+            onPress={() =>
+              this.setState({
+                isVisible: true,
+              })
+            }
           />
-          <Separator />
-          <Button title={ButtonText} onPress={() => this._addToList()} />
         </View>
-        <Separator />
-        <Button
-          title={'Add New Item'}
-          onPress={() =>
-            this.setState({
-              isVisible: true,
-            })
-          }
-        />
         <ScrollView>{this.renderItemList()}</ScrollView>
-
       </View>
     );
   }
